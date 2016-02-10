@@ -14,6 +14,7 @@ function checkDupelicate(res, mail) {
       res.json({
         status: "dupelicated"
       });
+      defer.reject();
     } else {
       defer.resolve();
     }
@@ -35,8 +36,8 @@ function recordDetail(body) {
   var defer = Q.defer();
   var token = body.token;
   var setRequest = {};
-  for(var key in body){
-    if(key!=="token"){
+  for (var key in body) {
+    if (key !== "token") {
       setRequest[key] = body[key];
     }
   }
@@ -44,7 +45,32 @@ function recordDetail(body) {
     _id: ObjectId(token)
   }, {
     $set: setRequest
-  },{},(r)=>{
+  }, {}, (r) => {
+    defer.resolve();
+  });
+  return defer.promise;
+}
+
+function sendConfirmMail(mail) {
+  var defer = Q.defer();
+  var templateContent = [{
+    name: "MailAddr",
+    content: mail
+  }];
+  var message = {
+    to: [{
+      email: mail
+    }]
+  };
+  client.messages.sendTemplate({
+    template_name: "lp-register-confirm",
+    template_content: templateContent,
+    message: message
+  }, (result) => {
+    console.info(result);
+    defer.resolve();
+  }, (err) => {
+    console.warn(err);
     defer.resolve();
   });
   return defer.promise;
@@ -53,47 +79,30 @@ function recordDetail(body) {
 module.exports = {
   index: function(req, res) {
     var mail = req.body.mail;
-    if (!email_validator.validate(mail)) res.json({
-      status: "invalid"
-    });
+    if (!email_validator.validate(mail)) {
+      res.json({
+        status: "invalid"
+      });
+      return;
+    }
     checkDupelicate(res, mail).then(() => {
-        recordMail(mail).then((r) => {
-          res.json({
-            status: "success",
-            token: r.ops[0]._id
-          });
-        });
+        return recordMail(mail);
+      },
+      () => {
+        return;
+      }).then(() => {
+      return sendConfirmMail(mail);
+    }).then(( => {
+      res.json({
+        status: "success"
       })
-      //   var content =[
-      //     {
-      //       name:"MailAddr",
-      //       content:"LimeStreem@gmail.com"
-      //     }
-      //   ];
-      //   var message = {
-      //     from_email : "support@amatelus.com",
-      //     from_name: "AMATELUS.Inc",
-      //     to:[
-      //       {
-      //         email:"LimeStreem@gmail.com",
-      //         name:"Customer",
-      //         type:"to"
-      //       }
-      //     ]
-      //   };
-      //   client.messages.sendTemplate({"template_name":"lp-register-confirm","template_content":content,message:message}, function(result) {
-      //   console.log(result);
-      //   }, function(e) {
-      //   // Mandrill returns the error as an object with name and message keys
-      //   console.log('A mandrill error occurred: ' + e.name + ' - ' + e.message);
-      //   // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
-      // });
-      // res.json({status:200});
+    }));
+
   },
   detail: function(req, res) {
-    recordDetail(req.body).then(()=>{
+    recordDetail(req.body).then(() => {
       res.json({
-        status:"success"
+        status: "success"
       });
     });
   }
