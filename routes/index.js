@@ -27,7 +27,7 @@ function recordMail(mail) {
   mongo.insert("mails", {
     email: mail
   }, {}, (result) => {
-    defer.resolve(result);
+    defer.resolve(result.insertedIds[0]);
   });
   return defer.promise;
 }
@@ -53,10 +53,6 @@ function recordDetail(body) {
 
 function sendConfirmMail(mail) {
   var defer = Q.defer();
-  var templateContent = [{
-    name: "MailAddr",
-    content: mail
-  }];
   var message = {
     to: [{
       email: mail
@@ -64,14 +60,15 @@ function sendConfirmMail(mail) {
   };
   client.messages.sendTemplate({
     template_name: "lp-register-confirm",
-    template_content: templateContent,
-    message: message
+    template_content: [
+    ],
+    message: message,
   }, (result) => {
     console.info(result);
     defer.resolve();
   }, (err) => {
     console.warn(err);
-    defer.resolve();
+    defer.reject();
   });
   return defer.promise;
 }
@@ -86,18 +83,19 @@ module.exports = {
       return;
     }
     checkDupelicate(res, mail).then(() => {
-        return recordMail(mail);
-      },
-      () => {
-        return;
+      var id;
+      recordMail(mail).then((_id) => {
+        id = _id;
+        return sendConfirmMail(mail);
       }).then(() => {
-      return sendConfirmMail(mail);
-    }).then(( => {
-      res.json({
-        status: "success"
-      })
-    }));
-
+        res.json({
+          status: "success",
+          token: id
+        })
+      });
+    }).catch((err) => {
+      console.error(err);
+    });
   },
   detail: function(req, res) {
     recordDetail(req.body).then(() => {
