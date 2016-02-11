@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "watchify -v -d ./src/index.babel.js -t [ babelify --presets [ es2015 ] ] -o 'exorcist ./static/index.js.map > ./static/index.js'",
+    "build": "browserify -v -d ./src/index.babel.js -t [ babelify --presets [ es2015 ] ] | uglifyjs > ./static/index.js"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -11,16 +14,23 @@
     "debug": "~2.2.0",
     "express": "~4.13.1",
     "jade": "~1.11.0",
+    "jquery": "^2.2.0",
     "morgan": "~1.6.1",
     "serve-favicon": "~2.3.0"
   },
   "devDependencies": {
     "assert": "^1.3.0",
+    "babel-preset-es2015": "^6.5.0",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
     "email-validator": "^1.0.4",
+    "exorcist": "^0.4.0",
     "express-resource": "^1.0.0",
     "mandrill": "^0.1.0",
     "mandrill-api": "^1.0.45",
     "mongodb": "^2.1.7",
-    "q": "^1.4.1"
+    "q": "^1.4.1",
+    "uglify-js": "^2.6.1",
+    "watchify": "^3.7.0"
   }
 }

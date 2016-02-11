@@ -1,5 +1,5 @@
 var mandrill = require('mandrill-api/mandrill');
-var client = new mandrill.Mandrill('0sxAQ1bAhMZ6M2ixUMQZcA');
+var client = new mandrill.Mandrill(process.env.MANDRILL);
 var mongo = require("../model/mongo.js");
 var Q = require("q");
 var ObjectId = require("mongodb").ObjectId;
@@ -73,8 +73,14 @@ function sendConfirmMail(mail) {
   return defer.promise;
 }
 
+var fs = require('fs');
+
 module.exports = {
   index: function(req, res) {
+    var indexPageHTML = fs.readFileSync('./index.html').toString();
+    res.send(indexPageHTML);
+  },
+  apiIndex: function(req, res) {
     var mail = req.body.mail;
     if (!email_validator.validate(mail)) {
       res.json({
@@ -97,7 +103,7 @@ module.exports = {
       console.error(err);
     });
   },
-  detail: function(req, res) {
+  apiDetail: function(req, res) {
     recordDetail(req.body).then(() => {
       res.json({
         status: "success"
