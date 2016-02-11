@@ -1,6 +1,6 @@
 var db;
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017";
+var url = "mongodb://localhost:27017/amateluslp";
 var assert = require("assert");
 MongoClient.connect(url, (err, mongodb) => {
   console.log("Connecting to mongo DB was completed!");

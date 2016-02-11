@@ -17,11 +17,15 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(cookieParser());
+app.use('/static', express.static('static'));
 
 var route = require('./routes/index');
 
-app.post('/', route.index);
-app.post('/detail/',route.detail);
+app.get('/', route.index);
+
+app.post('/api', route.apiIndex);
+app.post('/api/detail', route.apiDetail);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
