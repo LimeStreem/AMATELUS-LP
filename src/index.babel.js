@@ -152,7 +152,7 @@ class Submit {
       mail: emailAdress,
     };
     $.ajax({
-      url: 'http://localhost:3000/api',
+      url: '/api',
       type: 'post',
       data: formData,
       success: (data, s) => {
@@ -179,7 +179,7 @@ class Submit {
     const formData = obj;
     formData.token = token;
     $.ajax({
-      url: 'http://localhost:3000/api/detail',
+      url: '/api/detail',
       type: 'post',
       data: formData,
       success: (data, s) => {
