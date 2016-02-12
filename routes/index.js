@@ -74,10 +74,10 @@ function sendConfirmMail(mail) {
 }
 
 var fs = require('fs');
+var indexPageHTML = fs.readFileSync('./index.html').toString();
 
 module.exports = {
   index: function(req, res) {
-    var indexPageHTML = fs.readFileSync('./index.html').toString();
     res.send(indexPageHTML);
   },
   apiIndex: function(req, res) {
