@@ -38,4 +38,7 @@ node_modules
 # Optional REPL history
 .node_repl_history
 
+nohup.out
+nohup20160216.out
+
 /static/index.js.map

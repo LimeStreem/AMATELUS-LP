@@ -22,7 +22,8 @@ var sslOptions = {
   cert: fs.readFileSync(process.env.LP_CERT || folder + '/ssl_cert/server_crt.pem'),
   ca: caCert,
   requestCert: true,
-  rejectUnauthorized: false
+  rejectUnauthorized: false,
+  passphrase: process.env.LP_PASS
 };
 
 
