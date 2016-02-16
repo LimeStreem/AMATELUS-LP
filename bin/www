@@ -106,7 +106,7 @@ function onListening() {
 
 var redirectServer = http.createServer((req, res) => {
   res.writeHead(301, {
-    Location: "https://" + req.headers["host"].replace("www.", "") + req.url
+    Location: "https://" + process.env.DOMAIN + req.url
   });
   res.end();
 }).listen(portUnSecure);
