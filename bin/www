@@ -7,12 +7,31 @@
 var app = require('../app');
 var debug = require('debug')('amatelus-lp:server');
 var http = require('http');
+var fs = require('fs');
+var https = require('https');
+var folder = require('path').dirname(require.main.filename);
+
+var caCert;
+if (process.env.LP_CA_CERT) {
+  caCert = fs.readFileSync(process.env.LP_CA_CERT || folder + '/ssl_cert/ca.crt');
+}
+var domain = process.env.LP_DOMAIN || 'localhost:443';
+
+var sslOptions = {
+  key: fs.readFileSync(process.env.LP_CERT_KEY || folder + '/ssl_cert/server_key.pem'),
+  cert: fs.readFileSync(process.env.LP_CERT || folder + '/ssl_cert/server_crt.pem'),
+  ca: caCert,
+  requestCert: true,
+  rejectUnauthorized: false
+};
+
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT_HTTPS || '443');
+var portUnSecure = normalizePort(process.env.PORT_HTTP || '80');
 console.log("Now server is runnning on PORT:" + port);
 app.set('port', port);
 
@@ -20,13 +39,13 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = https.createServer(sslOptions, app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+server.listen(port, onListening);
 server.on('error', onError);
 server.on('listening', onListening);
 
@@ -59,9 +78,7 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -84,8 +101,13 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+var redirectServer = http.createServer((req, res) => {
+  res.writeHead(301, {
+    Location: "https://" + req.headers["host"].replace("www.", "") + req.url
+  });
+  res.end();
+}).listen(portUnSecure);

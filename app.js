@@ -6,7 +6,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var resource = require('express-resource');
 var mongo = require('./model/mongo');
-
 var app = express();
 
 // uncomment after placing your favicon in /public

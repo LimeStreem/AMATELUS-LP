@@ -26,6 +26,7 @@
     "email-validator": "^1.0.4",
     "exorcist": "^0.4.0",
     "express-resource": "^1.0.0",
+    "https": "^1.0.0",
     "mandrill": "^0.1.0",
     "mandrill-api": "^1.0.45",
     "mongodb": "^2.1.7",
