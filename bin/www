@@ -15,7 +15,6 @@ var caCert;
 if (process.env.LP_CA_CERT) {
   caCert = fs.readFileSync(process.env.LP_CA_CERT || folder + '/ssl_cert/ca.crt');
 }
-var domain = process.env.LP_DOMAIN || 'localhost:443';
 
 var sslOptions = {
   key: fs.readFileSync(process.env.LP_CERT_KEY || folder + '/ssl_cert/server_key.pem'),
