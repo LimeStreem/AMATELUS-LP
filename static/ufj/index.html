@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-
+<script src="https://cdn.mlkcca.com/v2.0.0/milkcocoa.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
 <script src="jthree/2.1/jThree.min.js"></script>
 <script src="jThree.WebAR.js?17"></script>
@@ -14,7 +14,8 @@
 <script src="stereo/2.0/jThree.Stereo.js"></script>
 <script src="speech.js"></script>
 <script>
-
+var milkcocoa = new MilkCocoa('onilq0mtuc.mlkcca.com');
+window.connect = milkcocoa.dataStore("connect");
 var json = {
 	1: {
 		list: [
@@ -37,12 +38,6 @@ var json = {
 		],
 		sendTo: {
 			account_id: 22222
-		},
-		onSelect: function( index ) {
-			console.log( this.list[ index ] );
-		},
-		onEnd: function() {
-
 		}
 	},
 	2: {
@@ -68,13 +63,7 @@ var json = {
 		sendTo: {
 			account_id: 22222
 		},
-		mode: "video",
-		onSelect: function( index ) {
-			console.log( this.list[ index ] );
-		},
-		onEnd: function() {
-			console.log(2)
-		}
+		mode: "video"
 	},
 	3: {
 		list: [
@@ -101,12 +90,6 @@ var json = {
 		mode: "360image",
 		sendTo: {
 			account_id: 22222
-		},
-		onSelect: function( index ) {
-			console.log( this.list[ index ] );
-		},
-		onEnd: function() {
-			console.log(2)
 		}
 	},
 	4: {
@@ -130,12 +113,6 @@ var json = {
 		],
 		sendTo: {
 			account_id: 22222
-		},
-		onSelect: function( index ) {
-			console.log( this.list[ index ] );
-		},
-		onEnd: function() {
-			console.log(2)
 		}
 	}
 };
@@ -254,7 +231,7 @@ jThree( function( j3 ) {
 		}
 
 		!function() {
-
+			var _this = this;
 			var dataList = [];
 			j3( ".marker" ).each( function( idx ) {
 				var obj = j3( this );
@@ -270,7 +247,7 @@ jThree( function( j3 ) {
 				});
 			}).click( function() {
 				if ( !isPortrait || selecting ) return;
-				onSelect( dataList[ j3( ".marker" ).index( this ) ] );
+				onSelect( dataList[ j3( ".marker" ).index( this ) ] ,_this);
 			});
 
 			var p = new THREE.Projector;
@@ -288,6 +265,7 @@ jThree( function( j3 ) {
 					currentLoading = data;
 					loadBar.position.copy( data.lastPos );
 					loadBar.position.y -= 10;
+					window.lastPos = data.lastPos;
 				}
 			}
 			function onLoading( data ) {
@@ -298,7 +276,7 @@ jThree( function( j3 ) {
 				currentLoading = null;
 				loadBar.position.set( 0, 0, 0 );
 			}
-			function onSelect( data ) {
+			function onSelect( data,_this ) {
 				loadBar.position.set( 0, 0, 0 );
 				var rest = data.markerId % 10;
 				var target = json[ rest ];
@@ -315,6 +293,14 @@ jThree( function( j3 ) {
 					//!isPortrait && vr.start();
 					break;
 				}
+				connect.off("send");
+				connect.on("send",function(data){
+					if(data.op === "YES"){
+						onYes();
+					}else{
+						onNo();
+					}
+				});
 			}
 			function onEnd() {
 				selecting = false;
@@ -369,7 +355,7 @@ jThree( function( j3 ) {
 							} else if ( data.loading !== false ) {//消えてて選択しそう
 								if ( data.loading > loadingTime ) {
 									data.state = true;//選択した
-									onSelect( data );
+									onSelect( data ,_this);
 								} else {
 									data.loading += d;
 									onLoading( data );
@@ -385,6 +371,7 @@ jThree( function( j3 ) {
 						data.lastPos.set( data.threejs.matrixWorld.elements[ 12 ], data.threejs.matrixWorld.elements[ 13 ], data.threejs.matrixWorld.elements[ 14 ] );
 					}
 				});
+				console.log(loadBar.position);
 			});
 		}();
 
@@ -658,7 +645,7 @@ body {
 			    <mesh id="loading" geo="#loadGeo" mtl="#loadMtl" style="mtlColor: #ff4081;">
 			    	<mesh id="loaded" geo="#loadGeo" mtl="#loadMtl" style="positionZ: .1;mtlColor: #00bcd4;"/>
 			    </mesh>
-					<obj style="position: 1.5 0 -25; rotateY: -.5;">
+					<obj style="position: 1.5 0 -25;">
 						<obj id="select" style="display: false;">
 							<mesh geo="#selectGeo" mtl="#selectMtl"/>
 							<mesh id="yes" geo="#yesNoGeo" mtl="#yesMtl" style="position: -1.5 -4.25 .01;"/>

@@ -1,6 +1,6 @@
 $(function(){
   var milkcocoa = new MilkCocoa('onilq0mtuc.mlkcca.com');
-  var conection = milkcocoa.dataStore("conect");
+  var conection = milkcocoa.dataStore("connect");
   $("#YES").click(function(){
     conection.send({
       op:"YES"
