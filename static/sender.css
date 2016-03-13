@@ -1,0 +1,23 @@
+a {
+  margin:100px;
+  color:white;
+  padding: 20px;
+  display: block;
+  cursor: pointer;
+}
+
+a#YES{
+  background-color: red;
+}
+
+a#NO{
+  background-color: blue;
+}
+
+a#YES:hover{
+  background-color: green;
+}
+
+a#NO:hover{
+  background-color: green;
+}
