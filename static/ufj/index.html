@@ -13,6 +13,10 @@
 <!-- Plugins -->
 <script src="stereo/2.0/jThree.Stereo.js"></script>
 <script src="speech.js"></script>
+
+<!-- UFJAPI -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
+<script type="text/javascript" src="/static/ufj/javascripts/index.js"></script>
 <script>
 
 var json = {
@@ -465,6 +469,16 @@ jThree.fn.line = function( r, n, color, star ) {
     this.three( 0 ).add( Line( r, n, mtl, star ) );
     return this;
 };
+
+/**
+ * UFJAPI
+ */
+UFJAPI.load(function(me) {
+	console.log(me);
+	/**
+	 * !!!!! USE UFJAPI HERE !!!!!
+	 */
+});
 
 </script>
 
