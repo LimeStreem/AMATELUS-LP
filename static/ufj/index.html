@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script src="jthree/2.1/jThree.min.js"></script>
+<script src="jThree.WebAR.js?17"></script>
+<script src="jThree.Orbit.js?17"></script>
+<script src="jThree.MobileVR.js?17"></script>
+
+<!-- Plugins -->
+<script src="stereo/2.0/jThree.Stereo.js"></script>
+<script src="speech.js"></script>
+<script>
+
+var json = {
+	1: {
+		list: [
+			{
+				title: "カニのパエリア",
+				price: 20000
+			},
+			{
+				title: "ローストチキンとグリル野菜のパエリア",
+				price: 40000
+			},
+			{
+				title: "ビバパエリア　デラックス",
+				price: 80000
+			},
+			{
+				title: "たっぷり魚介のシーフードパエリア",
+				price: 100000
+			}
+		],
+		sendTo: {
+			account_id: 22222
+		},
+		onSelect: function( index ) {
+			console.log( this.list[ index ] );
+		},
+		onEnd: function() {
+
+		}
+	},
+	2: {
+		list: [
+			{
+				title: "アマルフィ",
+				price: 20000,
+				video: "video/video0.mp4"
+			},
+			{
+				title: "ハワイ",
+				price: 40000
+			},
+			{
+				title: "日本",
+				price: 80000
+			},
+			{
+				title: "カナダ",
+				price: 100000
+			}
+		],
+		sendTo: {
+			account_id: 22222
+		},
+		mode: "video",
+		onSelect: function( index ) {
+			console.log( this.list[ index ] );
+		},
+		onEnd: function() {
+			console.log(2)
+		}
+	},
+	3: {
+		list: [
+			{
+				title: "スペイン",
+				price: 20000,
+				image: "img/travel0.png"
+			},
+			{
+				title: "ハワイ",
+				price: 40000,
+				image: "img/travel1.png"
+			},
+			{
+				title: "日本",
+				price: 80000,
+				image: "img/travel2.jpg"
+			},
+			{
+				title: "カナダ",
+				price: 100000
+			}
+		],
+		mode: "360image",
+		sendTo: {
+			account_id: 22222
+		},
+		onSelect: function( index ) {
+			console.log( this.list[ index ] );
+		},
+		onEnd: function() {
+			console.log(2)
+		}
+	},
+	4: {
+		list: [
+			{
+				title: "Relaxation",
+				price: 20000
+			},
+			{
+				title: "Care",
+				price: 40000
+			},
+			{
+				title: "Make",
+				price: 80000
+			},
+			{
+				title: "カナダ",
+				price: 100000
+			}
+		],
+		sendTo: {
+			account_id: 22222
+		},
+		onSelect: function( index ) {
+			console.log( this.list[ index ] );
+		},
+		onEnd: function() {
+			console.log(2)
+		}
+	}
+};
+
+
+jThree( function( j3 ) {
+
+	function createNumber( number ) {
+		var smallNumber = number % 1000;
+		var text = "" + ( number - smallNumber ) / 1000 + "K" + ( "000" + smallNumber ).slice( -3 ) + "-";
+		textArr = text.split( "" );
+
+		var ns = j3( ".number" ).hide();
+		for ( var i = 0, l = text.length; i < l; i++ ) {
+			ns.eq( i ).css( "mtlMap", "#numberTxr" + textArr[ i ] )
+			.positionX( ( i - ( l - 1 ) / 2 ) * .4 ).show();
+		}
+
+	}
+
+	var stereo = j3.Stereo();
+	stereo.effect.separation = 1;
+	$( "#loading" ).remove();
+
+	var video = $( "#video"  ).getWebCam( navigator.userAgent.indexOf('Android') > 0 ? 1 : 1 )[ 0 ];
+	var v_frame = $( "#v_frame" );
+
+	var first = 0;
+	//navigator.userAgent.indexOf('Android') > 0 && j3.MobileVR();
+
+	video.addEventListener( "canplaythrough", function( e ) {
+		if ( first++ ) return;
+
+		var canvas = videoToCanvas( e.target );
+
+		var ctx = $( "#backCanvas" )[ 0 ].getContext( "2d" );
+		var isPortrait = true;
+		var orbit = j3.Orbit();
+		var vr = j3.MobileVR().stop();
+
+		function resize() {
+			canvas.resize();
+			if ( window.innerWidth > window.innerHeight ) {
+				v_frame.width( "50%" ).removeClass( "portrait" );
+				ctx.canvas.style.display = "inline";
+      	stereo.start();
+				//vr.start();
+				orbit.enabled = false;
+      	isPortrait = false;
+      } else {
+				v_frame.width( video.videoWidth ).addClass( "portrait" );
+				video.style.marginLeft = 0;
+				ctx.canvas.style.display = "none";
+      	stereo.stop();
+				//vr.stop();
+				orbit.enabled = true;
+      	isPortrait = true;
+      }
+	    $( "#jthree" ).width( canvas.canvas.width )
+	    .height( canvas.canvas.height );
+	    width = $( "#jthree" ).width();
+	    height = $( "#jthree" ).height();
+	    ctx.canvas.width = width / 2;
+	    ctx.canvas.height = height;
+		}
+		$( window ).resize( resize );
+		resize();
+
+		var markerList = [];
+		for ( var key in json ) {
+			json[ key ].list.forEach( function( list, idx ) {
+				markerList.push( idx * 10 + ( + key ) );
+			});
+		}
+
+		/*start create UI-------------*/
+		var t = "";
+		for ( var i = 0; i < markerList.length; i++ ) {
+			t += '<obj class="marker">'
+					+ '<mesh geo="#logoGeo" mtl="#' + ( json[ markerList[ i ] % 10 ].mode === "360image" ? "try" : "logo" ) + 'Mtl" style="positionY: 3.05; rotateX: -1.57;"/>'
+					+ '<mesh geo="#btnGeo" mtl="#' + ( json[ markerList[ i ] % 10 ].mode === "360image" ? "try2" : "btn" ) + 'Mtl"/>'
+				+ '</obj>';
+		}
+		j3( "scene" ).append( t );
+		/*end create UI---------------*/
+
+		var p = new THREE.Projector;
+		var v = new THREE.Vector3;
+		var cam_c = j3( "camera" ).three( 0 );
+		var miku = j3( ".marker:first" ).three( 0 );
+		var width = $( "#jthree" ).width();
+		var height = $( "#jthree" ).height();
+		var xc = xl = xr = 0;
+		var selecting = false;
+
+		j3( ".marker:first" ).WebAR( "#mainCam", canvas.canvas, { marker: markerList[ 0 ], tracking: false }, function() {
+			canvas.update();
+			if ( isPortrait ) return;
+
+			p.projectVector( v.set( miku.matrixWorld.elements[ 12 ], miku.matrixWorld.elements[ 13 ], miku.matrixWorld.elements[ 14 ] ), cam_c );
+			xc = v.x === 0 ? xc : v.x;
+
+			p.projectVector( v.set( miku.matrixWorld.elements[ 12 ], miku.matrixWorld.elements[ 13 ], miku.matrixWorld.elements[ 14 ] ), stereo.effect.cameraL );
+			xl = Math.abs( v.x ) > 2 ? xl : v.x;
+
+			p.projectVector( v.set( miku.matrixWorld.elements[ 12 ], miku.matrixWorld.elements[ 13 ], miku.matrixWorld.elements[ 14 ] ), stereo.effect.cameraR );
+			xr = Math.abs( v.x ) > 2 ? xr : v.x;
+
+			ctx.drawImage( canvas.canvas, canvas.W / 4 + ( xc * canvas.W / 2 - xl * canvas.W / 4 ), 0, canvas.W / 2, canvas.H, 0, 0, canvas.W / 2, canvas.H );
+			video.style.marginLeft = - canvas.W / 4 - ( xc * canvas.W / 2 - xr * canvas.W / 4 ) + "px";
+
+		} );
+
+		for ( var i = 1; i < markerList.length; i++ ) {
+			j3( ".marker" ).eq( i ).WebAR( "#mainCam", canvas.canvas, { marker: markerList[ i ], tracking: false } );
+		}
+
+		!function() {
+
+			var dataList = [];
+			j3( ".marker" ).each( function( idx ) {
+				var obj = j3( this );
+				dataList.push( {
+					markerId: markerList[ idx ],
+					obj: obj,
+					threejs: obj.three( 0 ),
+					scale: obj.three( 0 ).scale,//0なら見えない
+					lastPos: new THREE.Vector3,//screen座標、最後に見えた位置が中央よりか
+					screenPos: new THREE.Vector3,
+					loading: false,//-1見えてる,false見えない＋選択しない, milisec見えない＋選択しそう
+					state: false//ここだけでY/Nを判断できるように
+				});
+			}).click( function() {
+				if ( !isPortrait || selecting ) return;
+				onSelect( dataList[ j3( ".marker" ).index( this ) ] );
+			});
+
+			var p = new THREE.Projector;
+			var cam = j3( "camera" ).three( 0 );
+			var currentLoading;
+			var loadingTime = 1000;//選択確定にかかる時間
+			var loadBar = j3( "#loading" ).three( 0 );
+			var currentData;
+			var currentIndex;
+
+			function onLoadStart( data ) {
+				if ( currentLoading ) {
+					data.loading = false;//選択取り消し
+				} else {
+					currentLoading = data;
+					loadBar.position.copy( data.lastPos );
+					loadBar.position.y -= 10;
+				}
+			}
+			function onLoading( data ) {
+				loadBar.children[ 0 ].scale.x = data.loading / loadingTime;
+				loadBar.children[ 0 ].position.x = - 5 * ( 1 - data.loading / loadingTime );
+			}
+			function onVisible( data ) {
+				currentLoading = null;
+				loadBar.position.set( 0, 0, 0 );
+			}
+			function onSelect( data ) {
+				loadBar.position.set( 0, 0, 0 );
+				var rest = data.markerId % 10;
+				var target = json[ rest ];
+				var index = ( data.markerId - rest ) / 10;
+				selecting = true;
+				j3( "#select" ).show();
+				currentData = target;
+				currentIndex = index;
+
+				switch ( target.mode ) {
+				case "360image":
+					j3( "#sphereTxr" ).attr( "src", target.list[ index ].image );
+					j3( "#sphere" ).show();
+					//!isPortrait && vr.start();
+					break;
+				}
+			}
+			function onEnd() {
+				selecting = false;
+				j3( "#select, #sphere" ).hide();
+				vr.stop();
+			}
+			function onYes() {
+				if ( currentData.mode === "video" ) {
+					$( "#movieFrame" ).show();
+					//$( "#movie" ).attr( "src", currentData.list[ currentIndex ].video );
+				} else {
+					onBalance();
+				}
+
+			}
+			function onBalance() {
+				j3( "#select" ).hide();
+				$( "#movieFrame" ).hide();
+				j3( "#balance" ).show();
+				setTimeout( function() {
+					j3( "#balance" ).hide();
+					onEnd();
+				}, 3000 );
+			}
+			function onNo() {
+				onEnd();
+			}
+			j3( "#yes" ).click( onYes );
+			j3( "#no" ).click( onNo );
+			j3( "#select" ).three( 0 ).renderDepth = 3;
+			$( "#movie" ).click( onBalance );
+
+			j3.update( function( d ) {
+				if ( isPortrait ) return;
+				dataList.forEach( function( data, idx ) {
+					if ( data.scale.x === 0 ) {
+						if ( data.state ) {//選択中
+
+						} else {
+							if ( data.loading === -1 ) {//見えた→消えた瞬間
+								p.projectVector( data.screenPos.copy( data.lastPos ), cam );
+
+								if ( Math.sqrt( Math.pow( data.screenPos.x, 2 )+ Math.pow( data.screenPos.y, 2 ) ) < .5 ) {
+									//選択開始
+									data.loading = 0;
+									onLoadStart( data );
+									onLoading( data );
+								} else {
+									//選択じゃなく消えた
+									data.loading = false;
+								}
+							} else if ( data.loading !== false ) {//消えてて選択しそう
+								if ( data.loading > loadingTime ) {
+									data.state = true;//選択した
+									onSelect( data );
+								} else {
+									data.loading += d;
+									onLoading( data );
+								}
+							}
+						}
+					} else {
+						if ( data.loading >= 0 ) {
+							onVisible( data );
+						}
+						data.loading = -1;
+						data.state = false;
+						data.lastPos.set( data.threejs.matrixWorld.elements[ 12 ], data.threejs.matrixWorld.elements[ 13 ], data.threejs.matrixWorld.elements[ 14 ] );
+					}
+				});
+			});
+		}();
+
+		$( "#start" ).show().click( function() {
+			toggleFS();
+			$( this ).remove();
+		});
+
+		$( "#fullscreen" ).click( toggleFS );
+
+		function toggleFS() {
+			if ( document.body.webkitRequestFullScreen ) {
+				if ( !document.webkitFullscreenElement ) {
+      				document.body.webkitRequestFullScreen();
+      			} else {
+      				document.webkitExitFullscreen();
+      			}
+      		}
+		}
+
+	}, false );
+
+	$( window ).click( (function() {
+		var timeoutID;
+		var target = $( "#ctrls" );
+		return function() {
+			target.addClass( "open" );
+			clearTimeout( timeoutID );
+			timeoutID = setTimeout( function() {
+				target.removeClass( "open" );
+			}, 5000 );
+		};
+	})());
+
+
+	return;
+	!function() {
+
+		var rec = new Recognition;
+		if ( !rec.canPlay ) return;
+
+		rec.onerror = function() {
+			//alert( "マイクに関してエラーが発生しました。\nマイクがセットされていない、あるいは日本語認識に対応していないブラウザである可能性があります。" );
+		};
+
+		rec.onend = function() {
+			rec.start();
+		};
+
+		rec.onresult = function( result ) {
+			$( "#userInput" ).val( result );
+		};
+
+		rec.onfinal = function( result ) {
+			$( "#userInput" ).val( result ).change();
+		};
+
+		rec.start();
+
+	}();
+
+});
+
+
+var Line = function( r, n, mtl, star ) {
+    var geo = new THREE.Geometry;
+    for ( var i = 0, I; i < n + 1; i ++ ) {
+        I = star ? ( n - 1 ) / 2 * i : i;
+        geo.vertices.push( new THREE.Vector3( Math.cos( Math.PI / 2 + I * 2 * Math.PI / n ) * r, Math.sin( Math.PI / 2 + I * 2 * Math.PI / n ) * r, 0) );
+    }
+    return new THREE.Line( geo, mtl );
+};
+
+var mtls = {};
+jThree.fn.line = function( r, n, color, star ) {
+    color = color || "#000";
+    var mtl = mtls[ color ] = mtls[ color ] || new THREE.LineBasicMaterial( { color: color, linewidth: 1 } );
+    this.three( 0 ).add( Line( r, n, mtl, star ) );
+    return this;
+};
+
+</script>
+
+</head>
+<body>
+
+<style>
+body {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #fff;
+}
+
+#jthree {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate( -50%, -50% );
+	-webkit-transform: translate( -50%, -50% );
+	-moz-transform: translate( -50%, -50% );
+	width: 10px;
+	height: 10px;
+}
+
+#loading {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url( "ufjLogo.jpg" ) no-repeat center;
+	background-color: #000;
+	opacity: 0.7;
+}
+
+#v_frame {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	height: 100%;
+	overflow: hidden;
+	z-index: -2;
+}
+
+#v_frame.portrait {
+	transform: translateX( -50% );
+	-webkit-transform: translateX( -50% );
+}
+
+#backCanvas {
+	position: absolute;
+	width: 50%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	z-index: -1;
+}
+
+#ctrls {
+    position: fixed;
+    bottom: 0;
+    transform: translateY( 100% );
+    -webkit-transform: translateY( 100% );
+    width: 100%;
+    left: 0;
+    transition: .4s ease;
+    -webkit-transition: .4s ease;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 80%, transparent 100%);
+    text-align: center;
+    padding: 15px 0 10px;
+}
+
+#ctrls.open {
+    transform: translateY( 0% );
+    -webkit-transform: translateY( 0% );
+}
+
+#fullscreen {
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
+	color: #fff;
+	font-weight: bold;
+}
+
+#start {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba( 0, 0, 0, .7 );
+}
+
+#start > div {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate( -50%, -50% );
+	-webkit-transform: translate( -50%, -50% );
+	background: rgba( 255, 255, 255, .8 );
+	padding: 15px 25px;
+	font-weight: bold;
+	border-radius: 5px;
+}
+
+#movieFrame {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: #000;
+	display: none;
+}
+#movie {
+	position: absolute;
+	width: 100%;
+	top: 50%;
+	left: 50%;
+	-webkit-transform: translate( -50%, -50% );
+}
+</style>
+<div id="jthree">
+	<div id="v_frame">
+		<video id="video" autoplay></video>
+	</div>
+	<canvas id="backCanvas"></canvas>
+</div>
+
+<script type="text/goml">
+<goml>
+	<head>
+		<txr id="logoTxr" src="img/btn.png"/>
+		<geo id="logoGeo" type="Plane" param="12 12"/>
+		<mtl id="logoMtl" type="MeshLambert" param="specular: #ccc; ambient: #aaa; map: #logoTxr;"/>
+		<txr id="tryTxr" src="img/try.png"/>
+		<mtl id="tryMtl" type="MeshLambert" param="specular: #ccc; ambient: #aaa; map: #tryTxr;"/>
+
+		<geo id="btnGeo" type="Cube" param="12 6 12"/>
+		<mtl id="btnMtl" type="MeshLambert" param="color: #EBA627; specular: #ccc; ambient: #aaa;"/>
+		<mtl id="try2Mtl" type="MeshLambert" param="color: #fff; specular: #ccc; ambient: #aaa;"/>
+
+		<txr id="selectTxr" src="img/select.png"/>
+		<geo id="selectGeo" type="Plane" param="6 8"/>
+		<mtl id="selectMtl" type="MeshBasic" param="map: #selectTxr;"/>
+
+		<geo id="yesNoGeo" type="Plane" param="3 2"/>
+		<txr id="yesTxr" src="img/yes.png"/>
+		<txr id="noTxr" src="img/no.png"/>
+		<mtl id="yesMtl" type="MeshBasic" param="map: #yesTxr;"/>
+		<mtl id="noMtl" type="MeshBasic" param="map: #noTxr;"/>
+
+
+		<txr id="balanceTxr" src="img/balance.png"/>
+		<geo id="balanceGeo" type="Plane" param="6 8"/>
+		<mtl id="balanceMtl" type="MeshBasic" param="map: #balanceTxr;"/>
+
+		<txr id="sphereTxr" src="img/travel0.png"/>
+		<geo id="sphereGeo" type="Sphere" param="50 64 64"/>
+		<mtl id="sphereMtl" type="MeshBasic" param="map: #sphereTxr;"/>
+
+		<txr id="numberTxr0" src="number/sprite0.png"/>
+		<txr id="numberTxr1" src="number/sprite1.png"/>
+		<txr id="numberTxr2" src="number/sprite2.png"/>
+		<txr id="numberTxr3" src="number/sprite3.png"/>
+		<txr id="numberTxr4" src="number/sprite4.png"/>
+		<txr id="numberTxr5" src="number/sprite5.png"/>
+		<txr id="numberTxr6" src="number/sprite6.png"/>
+		<txr id="numberTxr7" src="number/sprite7.png"/>
+		<txr id="numberTxr8" src="number/sprite8.png"/>
+		<txr id="numberTxr9" src="number/sprite9.png"/>
+		<txr id="numberTxr-" src="number/sprite-.png"/>
+		<txr id="numberTxrK" src="number/spriteK.png"/>
+		<geo id="numberGeo" type="Plane" param=".4 1.2"/>
+		<mtl id="numberMtl" type="MeshBasic" param="map: #numberTxr0;"/>
+
+		<geo id="loadGeo" type="Plane" param="10 1"/>
+		<mtl id="loadMtl" type="MeshBasic"/>
+		<rdr frame="#jthree" camera="camera:first" param="antialias: true; clearAlpha: 0;"/>
+	</head>
+	<body>
+		<scene>
+			<mesh id="sphere" geo="#sphereGeo" mtl="#sphereMtl" style="scaleX: -1; display: false;"/>
+			<camera id="mainCam" style="position: 0 10 1;cameraFar: 5000;">
+			    <light type="Dir" style="position: 1 3 5; lightColor: #ccc;" />
+			    <mesh id="loading" geo="#loadGeo" mtl="#loadMtl" style="mtlColor: #ff4081;">
+			    	<mesh id="loaded" geo="#loadGeo" mtl="#loadMtl" style="positionZ: .1;mtlColor: #00bcd4;"/>
+			    </mesh>
+					<obj style="position: 1.5 0 -25; rotateY: -.5;">
+						<obj id="select" style="display: false;">
+							<mesh geo="#selectGeo" mtl="#selectMtl"/>
+							<mesh id="yes" geo="#yesNoGeo" mtl="#yesMtl" style="position: -1.5 -4.25 .01;"/>
+							<mesh id="no" geo="#yesNoGeo" mtl="#noMtl" style="position: 1.5 -4.25 .01;"/>
+						</obj>
+						<obj id="balance" style="display: false;">
+							<mesh geo="#balanceGeo" mtl="#balanceMtl"/>
+						</obj>
+						<obj id="numberFrame" style="scale: 1.2;position: .5 -.7 .01;">
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+							<mesh class="number" geo="#numberGeo" mtl="#numberMtl" style="display: false;"/>
+						</obj>
+					</obj>
+			</camera>
+			<light type="Amb" style="lightColor: #ccc;" />
+		</scene>
+	</body>
+</goml>
+</script>
+
+<div id="movieFrame">
+	<img id="movie" src="img/movie.png"/>
+	<!--<iframe id="movie" width="560" height="315" src="https://www.youtube.com/embed/UlIiC3qt2A8" frameborder="0" allowfullscreen></iframe>-->
+</div>
+
+<div id="ctrls">
+	<div id="fullscreen">⇔</div>
+</div>
+<!--<input id="userInput" type="text" style="position: fixed; top: 10px; left: 10px;"/>-->
+<div id="loading"></div>
+<div id="start"><div>START</div></div>
+
+</body>
+</html>
