@@ -208,7 +208,7 @@ APIWrapper.prototype.rest = function (account_id, cb) {
   cb =  cb || function () {};
   api.users.me().then(function(data) {
     data.my_accounts.forEach(function(v) {
-      if (v === account_id.toString()) {
+      if (v.account_id === account_id.toString()) {
         cb(null, v.balance);
       }
     });
@@ -225,6 +225,7 @@ api.users.me().then(function (m) {
 
 // expose
 window.UFJAPI = new APIWrapper();
+window.UFJAPI.token = window.apiToken;
 
 // test
 // UFJAPI.load(function() {

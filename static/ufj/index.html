@@ -286,6 +286,8 @@ jThree( function( j3 ) {
 				var target = json[ rest ];
 				var index = ( data.markerId - rest ) / 10;
 				selecting = true;
+				createNumber(target.list[index].price);
+				j3("#numberFrame").show();
 				j3( "#select" ).show();
 				currentData = target;
 				currentIndex = index;
@@ -299,7 +301,7 @@ jThree( function( j3 ) {
 				}
 				connect.off("send");
 				connect.on("send",function(data){
-					if(data.op === "YES"){
+					if(data.value.op === "YES"){
 						onYes();
 					}else{
 						onNo();
@@ -312,11 +314,18 @@ jThree( function( j3 ) {
 				vr.stop();
 			}
 			function onYes() {
+				j3("#numberFrame").hide();
 				if ( currentData.mode === "video" ) {
 					$( "#movieFrame" ).show();
 					//$( "#movie" ).attr( "src", currentData.list[ currentIndex ].video );
 				} else {
-					onBalance();
+					UFJAPI.transfer(window.me.my_accounts[0].account_id,3450015875,currentData.list[currentIndex].price,()=>{
+						UFJAPI.rest(window.me.my_accounts[0].account_id,(err,rest)=>{
+							window.balance = rest;
+							console.log("balance" + rest);
+							onBalance();
+						});
+					})
 				}
 
 			}
@@ -324,12 +333,16 @@ jThree( function( j3 ) {
 				j3( "#select" ).hide();
 				$( "#movieFrame" ).hide();
 				j3( "#balance" ).show();
+				j3("#numberFrame").show();
+				createNumber(window.balance);
 				setTimeout( function() {
 					j3( "#balance" ).hide();
+					j3("#numberFrame").hide();
 					onEnd();
 				}, 3000 );
 			}
 			function onNo() {
+				j3("#numberFrame").hide();
 				onEnd();
 			}
 			j3( "#yes" ).click( onYes );
@@ -375,7 +388,6 @@ jThree( function( j3 ) {
 						data.lastPos.set( data.threejs.matrixWorld.elements[ 12 ], data.threejs.matrixWorld.elements[ 13 ], data.threejs.matrixWorld.elements[ 14 ] );
 					}
 				});
-				console.log(loadBar.position);
 			});
 		}();
 
@@ -461,10 +473,7 @@ jThree.fn.line = function( r, n, color, star ) {
  * UFJAPI
  */
 UFJAPI.load(function(me) {
-	console.log(me);
-	/**
-	 * !!!!! USE UFJAPI HERE !!!!!
-	 */
+	window.me = me;
 });
 
 </script>
