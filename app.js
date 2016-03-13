@@ -25,6 +25,14 @@ app.get('/', route.index);
 app.post('/api', route.apiIndex);
 app.post('/api/detail', route.apiDetail);
 
+var ufj_routes = require('./routes/ufj/index');
+var ufj_users = require('./routes/ufj/users');
+var ufj_transfer = require('./routes/ufj/transfer');
+
+app.use('/ufj/', ufj_routes);
+app.use('/ufj/users', ufj_users);
+app.use('/ufj/transfer', ufj_transfer);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
